@@ -129,16 +129,16 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
                 NumericParameter numericParameterInfo = numericFields.get(i).getAnnotation(NumericParameter.class);
                 final double parameterWidth = (numericParameterInfo.max() - numericParameterInfo.min()) / samplesPerDimension;
                 Random rand = new Random();
-                for(int j = 0; j < numberOfSamples; j++){ //TODO latin hypercube ausbessern
-                    cachedConfiguration.get(j).add(rand.nextDouble()*parameterWidth + numericParameterInfo.min() + ((Math.floor((j/(i+1)))) % dimension) * parameterWidth);
+                for(int j = 0; j < numberOfSamples; j++){
+                    cachedConfiguration.get(j).add(rand.nextDouble()*parameterWidth + numericParameterInfo.min() + j * parameterWidth);
                 }
             }
             for (int i = 0; i < nominalFields.size(); i++) { //for nominalFields
                 NominalParameter nominalParameterInfo = nominalFields.get(i).getAnnotation(NominalParameter.class);
-                final double parameterWidth = nominalParameterInfo.values().length/samplesPerDimension;
+                final double parameterWidth = (double)nominalParameterInfo.values().length/samplesPerDimension;
                 Random rand = new Random();
                 for(int j = 0; j < numberOfSamples; j++){
-                    cachedConfiguration.get(j).add(rand.nextDouble()*parameterWidth  + ((Math.floor((j/(i+1)))) % dimension) * parameterWidth);
+                    cachedConfiguration.get(j).add(rand.nextDouble()*parameterWidth  + j * parameterWidth);
                 }
             }
 
