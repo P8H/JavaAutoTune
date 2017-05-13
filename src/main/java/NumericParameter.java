@@ -10,4 +10,5 @@ import java.lang.annotation.*;
 public @interface NumericParameter {
     double min() default  0;
     double max() default Float.MAX_VALUE;
+    double cost() default 0;
 }

@@ -10,5 +10,5 @@ import java.lang.annotation.*;
 public @interface TuneableParameters {
     int initRandomSearch() default 5;
     int cacheNextPoints() default 5;
-
+    boolean autoTimeMeasure() default false;
 }

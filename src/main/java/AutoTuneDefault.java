@@ -28,15 +28,17 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
     //MOE hyper-parameter
     @NumericParameter(min=0.2, max=30)
-    int lengthScaleDivider = 5;
+    int lengthScaleDivider = 2;
     @NumericParameter(min=1, max=30)
-    int numOptimizerMultistarts =  3;
+    int numOptimizerMultistarts =  20;
     @NumericParameter(min=0.0001, max=2.0)
-    double gaussianSignalVariance = 1.0;
+    double gaussianSignalVariance = 2.0;
 
     private boolean useDefaultValues = true;
 
-    private boolean initRandomSearch = false;
+    private boolean initRandomSearchDone = false;
+
+    private boolean autoTimeMeasure = false;
 
     private OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
             .connectTimeout(320, TimeUnit.SECONDS)
@@ -46,18 +48,26 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
     private double bestResult = Double.MAX_VALUE;
     @Nullable private List<Double> bestConfiguration;
-    @Nullable private T currentConfigurationObject;
     @Nullable private T bestConfigurationObject;
+    @Nullable private T currentConfigurationObject;
+    private double currentConfigurationCosts;
+    private long startTimeStamp = Long.MIN_VALUE;
+    private long elapsedTime = 0;
 
     public AutoTuneDefault(T config){
         super(config);
     }
 
     @Override
-    public T getConfig() throws IllegalAccessException {
+    public AutoTune start() {
         //extract class information
         TuneableParameters tuneSettings = config.getClass().getAnnotation(TuneableParameters.class);
         cacheSize = tuneSettings.cacheNextPoints();
+        autoTimeMeasure = tuneSettings.autoTimeMeasure();
+
+        if(this.autoTimeMeasure){
+            this.startTimeMeasure();
+        }
 
         /** extract numeric field information **/
         final List<Field> numericFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NumericParameter.class);
@@ -101,8 +111,14 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
 
         //random search at the begin
-        if(!initRandomSearch){
-            final int samplesPerDimension = (int) Math.ceil(Math.log10(tuneSettings.initRandomSearch()) / Math.log10(dimension));
+        if(!initRandomSearchDone){
+            final int samplesPerDimension;
+            if(dimension != 1){
+                samplesPerDimension = (int) Math.ceil(Math.log10(tuneSettings.initRandomSearch()) / Math.log10(dimension));
+            }else{
+                samplesPerDimension = tuneSettings.initRandomSearch();
+            }
+
 
             final int numberOfSamples = (int) Math.pow(samplesPerDimension, dimension);
             cachedConfiguration = new ArrayList<>(numberOfSamples);
@@ -130,31 +146,35 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
                 }
             }
 
-            initRandomSearch = true;
+            initRandomSearchDone = true;
 
             if(useDefaultValues) {
-                //add default values for probing (numeric values)
-                ArrayList<Double> predefinedDefaultParameters = new ArrayList<>(numericFields.size()+nominalFields.size());
-                for (Field field : numericFields) {
-                    predefinedDefaultParameters.add(field.getDouble(config));
-                }
-                for (Field field : nominalFields) {
-                    NominalParameter nominalParameterInfo = field.getAnnotation(NominalParameter.class);
-                    String strLabel;
-                    if(field.getType().equals(boolean.class)){
-                        strLabel = String.valueOf(field.getBoolean(config));
-                    }else {
-                        strLabel = (String) field.get(config);
+                try {
+                    //add default values for probing (numeric values)
+                    ArrayList<Double> predefinedDefaultParameters = new ArrayList<>(numericFields.size() + nominalFields.size());
+                    for (Field field : numericFields) {
+                        predefinedDefaultParameters.add(field.getDouble(config));
                     }
-                    int i;
-                    for (i = 0; i < nominalParameterInfo.values().length; i++) {
-                        if(nominalParameterInfo.values()[i].equals(strLabel)){
-                            break;
+                    for (Field field : nominalFields) {
+                        NominalParameter nominalParameterInfo = field.getAnnotation(NominalParameter.class);
+                        String strLabel;
+                        if (field.getType().equals(boolean.class)) {
+                            strLabel = String.valueOf(field.getBoolean(config));
+                        } else {
+                            strLabel = (String) field.get(config);
                         }
+                        int i;
+                        for (i = 0; i < nominalParameterInfo.values().length; i++) {
+                            if (nominalParameterInfo.values()[i].equals(strLabel)) {
+                                break;
+                            }
+                        }
+                        predefinedDefaultParameters.add(new Double(i));
                     }
-                    predefinedDefaultParameters.add(new Double(i));
+                    cachedConfiguration.add(predefinedDefaultParameters);
+                }catch (IllegalAccessException exc){
+                    throw new RuntimeException("Can access the config object.", exc.getCause());
                 }
-                cachedConfiguration.add(predefinedDefaultParameters);
             }
 
         }else if(cachedConfiguration.size() == 0){
@@ -189,39 +209,55 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         cachedConfiguration.remove(cachedConfiguration.size()-1);
 
 
+        currentConfigurationCosts = 0;
 
-        Iterator<Double> currentConfigurationItr = currentConfiguration.iterator();
-        for (Field field : numericFields){ //for numeric fields
-            if(field.getType().equals(long.class)){
-                field.setLong(config, currentConfigurationItr.next().longValue());
-            }else if(field.getType().equals(int.class)){
-                field.setInt(config, currentConfigurationItr.next().intValue());
-            }else {
-                //assume it is a double parameter
-                field.setDouble(config, currentConfigurationItr.next());
-            }
+try {
+    Iterator<Double> currentConfigurationItr = currentConfiguration.iterator();
+    for (Field field : numericFields) { //for numeric fields
+        Double parameterValue = currentConfigurationItr.next();
+        if (field.getType().equals(long.class)) {
+            field.setLong(config, parameterValue.longValue());
+        } else if (field.getType().equals(int.class)) {
+            field.setInt(config, parameterValue.intValue());
+        } else {
+            //assume it is a double parameter
+            field.setDouble(config, parameterValue);
         }
-        for (Field field : nominalFields){ //for nominal fields
-            NominalParameter nominalParameterInfo = field.getAnnotation(NominalParameter.class);
-            int label = currentConfigurationItr.next().intValue();
-            label = label < 0 ? 0 : label;
-            label = label >=  nominalParameterInfo.values().length ? nominalParameterInfo.values().length-1 : label;
+        NumericParameter numericParameterInfo = field.getAnnotation(NumericParameter.class);
+        currentConfigurationCosts += parameterValue * numericParameterInfo.cost();
 
-            String strLabel = nominalParameterInfo.values()[label];
+    }
+    for (Field field : nominalFields) { //for nominal fields
+        NominalParameter nominalParameterInfo = field.getAnnotation(NominalParameter.class);
+        int label = currentConfigurationItr.next().intValue();
+        label = label < 0 ? 0 : label;
+        label = label >= nominalParameterInfo.values().length ? nominalParameterInfo.values().length - 1 : label;
 
-            if(field.getType().equals(boolean.class)){
-                field.setBoolean(config, Boolean.parseBoolean(strLabel));
-            }else {
-                //assume it is a String parameter
-                field.set(config, strLabel);
-            }
+        String strLabel = nominalParameterInfo.values()[label];
+
+        if (field.getType().equals(boolean.class)) {
+            field.setBoolean(config, Boolean.parseBoolean(strLabel));
+        } else {
+            //assume it is a String parameter
+            field.set(config, strLabel);
         }
-        this.currentConfigurationObject = config;
-        return config;
+    }
+    this.currentConfigurationObject = config;
+}catch (IllegalAccessException exc){
+    throw new RuntimeException("Can't set value into config object", exc.getCause());
+}
+        return this;
     }
 
     @Override
-    public void setResult(double amount) {
+    public void end() {
+        if(this.autoTimeMeasure){
+            this.stopTimeMeasure();
+        }
+
+        double amount = currentConfigurationCosts; //add costs from configuration
+        amount += elapsedTime;//add elapsed time as cost
+
         if(!Double.isFinite(amount)){
             //sanitize result
             amount = Double.MAX_VALUE;
@@ -233,21 +269,54 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
             bestConfigurationObject = currentConfigurationObject;
         }
         sampledConfigurations.add(new Pair<>(currentConfiguration, amount));
+
+        this.currentConfigurationObject = null;
+        this.elapsedTime = 0;
     }
 
     @Override
-    public T getBestConfiguration() {
+    public @NotNull T getConfig(){
+        if(this.currentConfigurationObject == null){
+            throw new RuntimeException("You have to call start() first.");
+        }
+      return this.currentConfigurationObject;
+    }
+
+    @Override
+    public void setResult(double amount) {
+
+    }
+
+    @Override
+    public @Nullable T getBestConfiguration() {
         return this.bestConfigurationObject;
     }
 
     @Override
     List<Double> getBestConfigurationParameter() {
-        return null;
+        return this.bestConfiguration;
     }
 
     @Override
     public double getBestResult() {
         return this.bestResult;
+    }
+
+    @Override
+    void startTimeMeasure() {
+        if(this.startTimeStamp != Long.MIN_VALUE){
+            throw new RuntimeException("Start time measure but time measure are already started!");
+        }
+        this.startTimeStamp = System.nanoTime();
+    }
+
+    @Override
+    void stopTimeMeasure() {
+        if(this.startTimeStamp == Long.MIN_VALUE){
+            throw new RuntimeException("End time measure but time measure yet not started!");
+        }
+        this.elapsedTime += System.nanoTime()-this.startTimeStamp;
+        this.startTimeStamp = Long.MIN_VALUE;
     }
 
 }

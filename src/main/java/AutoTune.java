@@ -1,4 +1,9 @@
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -6,25 +11,33 @@ import java.util.List;
  */
 public abstract class AutoTune<T extends Serializable>{
 
-    protected T config;
+    protected @NotNull T config;
 
     /**
      * The fields of the given object will be optimized such as it was defined by the containing annotations
      *
-     * Has to be the first call
-     *
      * @param config Object with annotated fields
      */
-    public AutoTune(T config){
+    public AutoTune(@NotNull T config){
         this.config = config;
     }
 
     /**
-     * Return a reference to the optimized config object
-     *
-     * @throws IllegalAccessException
+     * Generates the optimized config object
+     * @return self reference to tuner
      */
-    abstract T getConfig() throws IllegalAccessException;
+    abstract public AutoTune<T> start();
+
+    /**
+     * Saves all benchmark results
+     */
+    abstract public void end();
+
+    /**
+     * Return a reference to the optimized config object
+     * @return reference to config object
+     */
+    abstract @NotNull T getConfig();
 
     /**
      * Set the evaluated result from tuned config
@@ -40,7 +53,7 @@ public abstract class AutoTune<T extends Serializable>{
      *
      * @return config object
      */
-    abstract T getBestConfiguration();
+    abstract @Nullable T getBestConfiguration();
 
     /**
      * Returns the best known parameters as double values
@@ -55,4 +68,36 @@ public abstract class AutoTune<T extends Serializable>{
      * @return result as double
      */
     abstract double getBestResult();
+
+    /**
+     * Start time measuring
+     *
+     * @return
+     */
+    abstract void startTimeMeasure();
+
+    /**
+     * End time measuring and add it to internal cost function
+     *
+     * @return
+     */
+    abstract void stopTimeMeasure();
+
+    static public class util{
+        final static String[] listTypes = {"ArrayList", "LinkedList"};
+        static public @NotNull List getOptimizedList(@NotNull String listType){
+            List list;
+            switch (listType){
+                case "ArrayList":
+                    list = new ArrayList();
+                    break;
+                case "LinkedList":
+                    list = new LinkedList();
+                    break;
+                default:
+                    list = new ArrayList();
+            }
+            return list;
+        }
+    }
 }
