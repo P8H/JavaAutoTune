@@ -65,10 +65,6 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         cacheSize = tuneSettings.cacheNextPoints();
         autoTimeMeasure = tuneSettings.autoTimeMeasure();
 
-        if(this.autoTimeMeasure){
-            this.startTimeMeasure();
-        }
-
         /** extract numeric field information **/
         final List<Field> numericFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NumericParameter.class);
 
@@ -211,41 +207,46 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
         currentConfigurationCosts = 0;
 
-try {
-    Iterator<Double> currentConfigurationItr = currentConfiguration.iterator();
-    for (Field field : numericFields) { //for numeric fields
-        Double parameterValue = currentConfigurationItr.next();
-        if (field.getType().equals(long.class)) {
-            field.setLong(config, parameterValue.longValue());
-        } else if (field.getType().equals(int.class)) {
-            field.setInt(config, parameterValue.intValue());
-        } else {
-            //assume it is a double parameter
-            field.setDouble(config, parameterValue);
+        try {
+            Iterator<Double> currentConfigurationItr = currentConfiguration.iterator();
+            for (Field field : numericFields) { //for numeric fields
+                Double parameterValue = currentConfigurationItr.next();
+                if (field.getType().equals(long.class)) {
+                    field.setLong(config, parameterValue.longValue());
+                } else if (field.getType().equals(int.class)) {
+                    field.setInt(config, parameterValue.intValue());
+                } else {
+                    //assume it is a double parameter
+                    field.setDouble(config, parameterValue);
+                }
+                NumericParameter numericParameterInfo = field.getAnnotation(NumericParameter.class);
+                currentConfigurationCosts += parameterValue * numericParameterInfo.cost();
+
+            }
+            for (Field field : nominalFields) { //for nominal fields
+                NominalParameter nominalParameterInfo = field.getAnnotation(NominalParameter.class);
+                int label = currentConfigurationItr.next().intValue();
+                label = label < 0 ? 0 : label;
+                label = label >= nominalParameterInfo.values().length ? nominalParameterInfo.values().length - 1 : label;
+
+                String strLabel = nominalParameterInfo.values()[label];
+
+                if (field.getType().equals(boolean.class)) {
+                    field.setBoolean(config, Boolean.parseBoolean(strLabel));
+                } else {
+                    //assume it is a String parameter
+                    field.set(config, strLabel);
+                }
+            }
+            this.currentConfigurationObject = config;
+        }catch (IllegalAccessException exc){
+            throw new RuntimeException("Can't set value into config object", exc.getCause());
         }
-        NumericParameter numericParameterInfo = field.getAnnotation(NumericParameter.class);
-        currentConfigurationCosts += parameterValue * numericParameterInfo.cost();
 
-    }
-    for (Field field : nominalFields) { //for nominal fields
-        NominalParameter nominalParameterInfo = field.getAnnotation(NominalParameter.class);
-        int label = currentConfigurationItr.next().intValue();
-        label = label < 0 ? 0 : label;
-        label = label >= nominalParameterInfo.values().length ? nominalParameterInfo.values().length - 1 : label;
-
-        String strLabel = nominalParameterInfo.values()[label];
-
-        if (field.getType().equals(boolean.class)) {
-            field.setBoolean(config, Boolean.parseBoolean(strLabel));
-        } else {
-            //assume it is a String parameter
-            field.set(config, strLabel);
+        if(this.autoTimeMeasure){
+            this.startTimeMeasure();
         }
-    }
-    this.currentConfigurationObject = config;
-}catch (IllegalAccessException exc){
-    throw new RuntimeException("Can't set value into config object", exc.getCause());
-}
+
         return this;
     }
 
