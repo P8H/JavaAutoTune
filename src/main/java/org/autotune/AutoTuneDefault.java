@@ -17,6 +17,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 /**
@@ -61,6 +62,11 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
     private long startTimeStamp = Long.MIN_VALUE;
     private long elapsedTime = 0;
 
+    @NotNull
+    final protected List<Field> numericFields;
+    @NotNull
+    final protected List<Field> nominalFields;
+
     public AutoTuneDefault(T config){
         super(config);
         logger.debug("Tuner created for configuration class " + config.getClass().getName());
@@ -69,13 +75,16 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         this.cacheSize = tuneSettings.cacheNextPoints();
         this.autoTimeMeasure = tuneSettings.autoTimeMeasure();
         this.useDefaultValues = true;
+
+        this.numericFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NumericParameter.class);
+
+        this.nominalFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NominalParameter.class);
     }
 
     @Override
     public AutoTune start() {
-        /** extract numeric field information **/
-        final List<Field> numericFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NumericParameter.class);
 
+        /** extract numeric field information **/
         //create domain info
         GpNextPointsRequest req = new GpNextPointsRequest(
                 cacheSize,
@@ -96,8 +105,6 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         }
 
         /** extract nominal field information **/
-        final List<Field> nominalFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NominalParameter.class);
-
         req.getCovariance_info().getHyperparameters().add(gaussianSignalVariance); //add signal variance information, for the gaussian process
         for (Field field : nominalFields){
             NominalParameter nominalParameterInfo = field.getAnnotation(NominalParameter.class);
@@ -292,6 +299,36 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
         this.currentConfigurationObject = null;
         this.elapsedTime = 0;
+        logger.trace("Sampled configurations as CSV \n{}", () -> {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (Field nField : this.numericFields) {
+                stringBuilder.append(nField.getName());
+                stringBuilder.append(';');
+            }
+            for (Field nField : this.nominalFields) {
+                stringBuilder.append(nField.getName());
+                stringBuilder.append(';');
+            }
+            stringBuilder.append("cost");
+            stringBuilder.append(';');
+            stringBuilder.append("order");
+            stringBuilder.append('\n');
+
+            int counter = 0;
+            for (Pair<List<Double>, Double> conf : sampledConfigurations) {
+                stringBuilder.append(conf.getKey().stream().map(i -> i.toString()).collect(Collectors.joining(",")));
+                stringBuilder.append(';');
+
+                stringBuilder.append(conf.getValue());
+                stringBuilder.append(';');
+
+                stringBuilder.append(counter++);
+                stringBuilder.append('\n');
+            }
+            stringBuilder.deleteCharAt(stringBuilder.length() - 1); //remove last new line
+
+            return stringBuilder.toString();
+        });
     }
 
     @Override

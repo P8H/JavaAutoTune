@@ -88,7 +88,6 @@ class SimpleRealTest {
         System.out.println(Arrays.toString(tuner.getBestConfigurationParameter().toArray()));
         System.out.println(tuner.getBestConfiguration().list1Type);
 
-        //TODO data export for evaluation in Browser
         //TODO add weighted cost adder
         //TODO logical weight description
 
