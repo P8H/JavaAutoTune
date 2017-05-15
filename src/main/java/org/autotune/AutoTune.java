@@ -1,3 +1,5 @@
+package org.autotune;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +37,8 @@ public abstract class AutoTune<T extends Serializable>{
      * Return a reference to the optimized config object
      * @return reference to config object
      */
-    abstract @NotNull T getConfig();
+    public abstract @NotNull
+    T getConfig();
 
     /**
      * Set the evaluated result from tuned config
@@ -51,21 +54,22 @@ public abstract class AutoTune<T extends Serializable>{
      *
      * @return config object
      */
-    abstract @Nullable T getBestConfiguration();
+    public abstract @Nullable
+    T getBestConfiguration();
 
     /**
      * Returns the best known parameters as double values
      *
      * @return config object
      */
-    abstract List<Double> getBestConfigurationParameter();
+    public abstract List<Double> getBestConfigurationParameter();
 
     /**
      * The result from the best known configuration
      *
      * @return result as double
      */
-    abstract double getBestResult();
+    public abstract double getBestResult();
 
     /**
      * Start time measuring
@@ -82,7 +86,8 @@ public abstract class AutoTune<T extends Serializable>{
     abstract void stopTimeMeasure();
 
     static public class util{
-        final static String[] listTypes = {"ArrayList", "LinkedList"};
+        public final static String[] listTypes = {"ArrayList", "LinkedList"};
+
         static public @NotNull List getOptimizedList(@NotNull String listType){
             List list;
             switch (listType){
@@ -98,7 +103,7 @@ public abstract class AutoTune<T extends Serializable>{
             return list;
         }
 
-        final static String[] mapTypes = {"HashMap", "TreeMap", "Hashtable"};
+        public final static String[] mapTypes = {"HashMap", "TreeMap", "Hashtable"};
 
         static public @NotNull
         Map getOptimizedMap(@NotNull String mapType) {

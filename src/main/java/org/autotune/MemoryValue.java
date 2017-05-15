@@ -1,3 +1,5 @@
+package org.autotune;
+
 import java.lang.annotation.*;
 
 /**
@@ -7,8 +9,5 @@ import java.lang.annotation.*;
 @Inherited
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-public @interface NumericParameter {
-    double min() default  0;
-    double max() default Float.MAX_VALUE;
-    double cost() default 0;
+public @interface MemoryValue {
 }

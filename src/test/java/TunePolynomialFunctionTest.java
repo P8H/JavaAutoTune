@@ -1,3 +1,8 @@
+import org.autotune.AutoTune;
+import org.autotune.AutoTuneDefault;
+import org.autotune.NumericParameter;
+import org.autotune.TuneableParameters;
+
 import java.io.Serializable;
 import java.util.Arrays;
 

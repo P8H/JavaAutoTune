@@ -1,3 +1,5 @@
+package org.autotune
+
 import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**

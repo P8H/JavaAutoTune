@@ -1,3 +1,5 @@
+package org.autotune;
+
 import java.lang.annotation.*;
 
 /**
@@ -9,6 +11,8 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface TuneableParameters {
     int initRandomSearch() default 5;
+
     int cacheNextPoints() default 5;
+
     boolean autoTimeMeasure() default false;
 }

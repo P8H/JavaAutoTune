@@ -1,3 +1,5 @@
+package org.autotune;
+
 import javafx.util.Pair;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -11,7 +13,10 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 
@@ -20,6 +25,9 @@ import java.util.concurrent.TimeUnit;
  */
 @TuneableParameters()
 public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
+
+    //Logger logger = LogManager.getLogger(AutoTuneDefault.class);
+
     @NotNull private List<Pair<List<Double>, Double>>sampledConfigurations = new ArrayList<>(10);
     @NotNull private List<List<Double>>cachedConfiguration  = new ArrayList<>(10);
     @Nullable private List<Double> currentConfiguration;
@@ -280,7 +288,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         if(this.currentConfigurationObject == null){
             throw new RuntimeException("You have to call start() first.");
         }
-      return this.currentConfigurationObject;
+        return this.currentConfigurationObject;
     }
 
     @Override
@@ -294,7 +302,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
     }
 
     @Override
-    List<Double> getBestConfigurationParameter() {
+    public List<Double> getBestConfigurationParameter() {
         return this.bestConfiguration;
     }
 
