@@ -1,17 +1,11 @@
-import javafx.util.Pair;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.junit.jupiter.api.Test;
-import sun.util.PreHashedMap;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Created by KevinRoj on 26.04.17.
@@ -70,7 +64,7 @@ class SimpleRealTest {
     @TuneableParameters(initRandomSearch = 3, cacheNextPoints = 2, autoTimeMeasure = true)
     class OptimizedList implements Serializable {
         static final long serialVersionUID = 4213L;
-        @NominalParameter(values = {"ArrayList", "LinkedList"})//AutoTune.util.listTypes)
+        @NominalParameter(values = {"ArrayList", "LinkedList"})
         String list1Type = AutoTune.util.listTypes[0];
     }
     @org.junit.jupiter.api.Test
@@ -81,9 +75,9 @@ class SimpleRealTest {
             OptimizedList cfg = tuner.start().getConfig();
             List<Double> list1 = AutoTune.util.getOptimizedList(cfg.list1Type);
 
-            Random rndGen = new Random();
-            for (int i = 0; i < 50000; i++) {
-                list1.add(rndGen.nextDouble());
+            //Random rndGen = new Random();
+            for (int i = 0; i < 5000000; i++) {
+                list1.add(1.0);
             }
             tuner.end();
             System.out.println(cfg.list1Type);
@@ -93,10 +87,40 @@ class SimpleRealTest {
         System.out.println(Arrays.toString(tuner.getBestConfigurationParameter().toArray()));
         System.out.println(tuner.getBestConfiguration().list1Type);
 
-        //TODO add weighted cost adder
-        //TODO Map benchmark test
+        //TODO logging functionality
         //TODO data export for evaluation in Browser
+        //TODO add weighted cost adder
         //TODO logical weight description
+
+    }
+
+    @TuneableParameters(initRandomSearch = 3, cacheNextPoints = 2, autoTimeMeasure = true)
+    class OptimizedMap implements Serializable {
+        static final long serialVersionUID = 4213L;
+        @NominalParameter(values = {"HashMap", "TreeMap", "Hashtable"})
+        String map1Type = AutoTune.util.mapTypes[0];
+    }
+
+    @org.junit.jupiter.api.Test
+    void simpleMapTest() {
+
+        AutoTune<OptimizedMap> tuner = new AutoTuneDefault(new OptimizedMap());
+
+        for (int t = 0; t < 10; t++) { //10 benchmark tests
+            OptimizedMap cfg = tuner.start().getConfig();
+            Map<String, Double> map1 = AutoTune.util.getOptimizedMap(cfg.map1Type);
+
+            Random rndGen = new Random();
+            for (int i = 0; i < 5000000; i++) {
+                map1.put(Long.toString(rndGen.nextInt()), rndGen.nextDouble());
+            }
+            tuner.end();
+            System.out.println(cfg.map1Type);
+        }
+
+        System.out.printf("Best configuration found with result %f \n", tuner.getBestResult());
+        System.out.println(Arrays.toString(tuner.getBestConfigurationParameter().toArray()));
+        System.out.println(tuner.getBestConfiguration().map1Type);
 
     }
 

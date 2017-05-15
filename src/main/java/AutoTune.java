@@ -2,9 +2,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by KevinRoj on 26.04.17.
@@ -98,6 +96,27 @@ public abstract class AutoTune<T extends Serializable>{
                     list = new ArrayList();
             }
             return list;
+        }
+
+        final static String[] mapTypes = {"HashMap", "TreeMap", "Hashtable"};
+
+        static public @NotNull
+        Map getOptimizedMap(@NotNull String mapType) {
+            Map map;
+            switch (mapType) {
+                case "HashMap":
+                    map = new HashMap();
+                    break;
+                case "TreeMap":
+                    map = new TreeMap();
+                    break;
+                case "Hashtable":
+                    map = new Hashtable();
+                    break;
+                default:
+                    map = new HashMap();
+            }
+            return map;
         }
     }
 }
