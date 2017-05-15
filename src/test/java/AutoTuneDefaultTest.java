@@ -32,6 +32,6 @@ class AutoTuneDefaultTest{
         result += cfg.PARAM2;
         result += cfg.PARAM3.equals("val2") ? 0 : 1;
         result += cfg.PARAM4 ? 0 : 1;
-        tuner.setResult(result);
+        //tuner.setResult(result);
     }
 }

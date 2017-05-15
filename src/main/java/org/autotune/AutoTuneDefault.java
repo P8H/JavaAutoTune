@@ -3,6 +3,8 @@ package org.autotune;
 import javafx.util.Pair;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import retrofit2.Call;
@@ -13,10 +15,7 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 
@@ -25,14 +24,14 @@ import java.util.concurrent.TimeUnit;
  */
 @TuneableParameters()
 public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
-
-    //Logger logger = LogManager.getLogger(AutoTuneDefault.class);
+    @NotNull
+    final static protected Logger logger = LogManager.getLogger(AutoTuneDefault.class);
 
     @NotNull private List<Pair<List<Double>, Double>>sampledConfigurations = new ArrayList<>(10);
     @NotNull private List<List<Double>>cachedConfiguration  = new ArrayList<>(10);
     @Nullable private List<Double> currentConfiguration;
 
-    private int cacheSize;
+    final private int cacheSize;
 
     //MOE hyper-parameter
     @NumericParameter(min=0.2, max=30)
@@ -42,11 +41,11 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
     @NumericParameter(min=0.0001, max=2.0)
     double gaussianSignalVariance = 2.0;
 
-    private boolean useDefaultValues = true;
+    final private boolean useDefaultValues;
 
     private boolean initRandomSearchDone = false;
 
-    private boolean autoTimeMeasure = false;
+    final private boolean autoTimeMeasure;
 
     private OkHttpClient okHttpClient = new OkHttpClient().newBuilder()
             .connectTimeout(320, TimeUnit.SECONDS)
@@ -64,15 +63,16 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
     public AutoTuneDefault(T config){
         super(config);
+        logger.debug("Tuner created for configuration class " + config.getClass().getName());
+
+        //extract class information
+        this.cacheSize = tuneSettings.cacheNextPoints();
+        this.autoTimeMeasure = tuneSettings.autoTimeMeasure();
+        this.useDefaultValues = true;
     }
 
     @Override
     public AutoTune start() {
-        //extract class information
-        TuneableParameters tuneSettings = config.getClass().getAnnotation(TuneableParameters.class);
-        cacheSize = tuneSettings.cacheNextPoints();
-        autoTimeMeasure = tuneSettings.autoTimeMeasure();
-
         /** extract numeric field information **/
         final List<Field> numericFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NumericParameter.class);
 
@@ -177,6 +177,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
                     }
                     cachedConfiguration.add(predefinedDefaultParameters);
                 }catch (IllegalAccessException exc){
+                    logger.catching(exc);
                     throw new RuntimeException("Can access the config object.", exc.getCause());
                 }
             }
@@ -209,8 +210,16 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         }
 
         //use cached configuration
-        currentConfiguration = cachedConfiguration.get(cachedConfiguration.size()-1);
-        cachedConfiguration.remove(cachedConfiguration.size()-1);
+        if (cachedConfiguration == null || cachedConfiguration.isEmpty()) {
+            logger.warn("No new configuration found. Use best known configuration.");
+            cachedConfiguration = new LinkedList<List<Double>>() {{
+                add(bestConfiguration);
+            }};
+        } else {
+            currentConfiguration = cachedConfiguration.get(cachedConfiguration.size() - 1);
+            cachedConfiguration.remove(cachedConfiguration.size() - 1);
+        }
+        logger.debug("New configuration values: {}", Arrays.toString(currentConfiguration.toArray()));
 
 
         currentConfigurationCosts = 0;
@@ -248,6 +257,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
             }
             this.currentConfigurationObject = config;
         }catch (IllegalAccessException exc){
+            logger.catching(exc);
             throw new RuntimeException("Can't set value into config object", exc.getCause());
         }
 
@@ -274,8 +284,9 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         if(amount < this.bestResult){
             //new best result
             this.bestResult = amount;
-            bestConfiguration = currentConfiguration;
-            bestConfigurationObject = currentConfigurationObject;
+            this.bestConfiguration = currentConfiguration;
+            this.bestConfigurationObject = currentConfigurationObject;
+            logger.debug("New best configuration found! Cost value: {}", this.bestResult);
         }
         sampledConfigurations.add(new Pair<>(currentConfiguration, amount));
 
@@ -289,11 +300,6 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
             throw new RuntimeException("You have to call start() first.");
         }
         return this.currentConfigurationObject;
-    }
-
-    @Override
-    public void setResult(double amount) {
-
     }
 
     @Override
@@ -326,6 +332,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         }
         this.elapsedTime += System.nanoTime()-this.startTimeStamp;
         this.startTimeStamp = Long.MIN_VALUE;
+        logger.debug("Stop time measure. Elapsed time: {} ns", this.elapsedTime);
     }
 
 }

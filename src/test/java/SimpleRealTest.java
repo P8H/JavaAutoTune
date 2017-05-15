@@ -15,14 +15,14 @@ import java.util.concurrent.*;
 class SimpleRealTest {
 
     @TuneableParameters(initRandomSearch = 5, autoTimeMeasure = true)
-    class OptimalParameter implements Serializable {
+    public class OptimalParameter implements Serializable {
         static final long serialVersionUID = 42122L;
         @NumericParameter(min=1, max=100000)
         int inputBufferSize = 6000;
     }
 
     @TuneableParameters(initRandomSearch = 3, cacheNextPoints = 2, autoTimeMeasure = true)
-    class OneParameter implements Serializable {
+    public class OneParameter implements Serializable {
         static final long serialVersionUID = 4213L;
         @NumericParameter(min=1, max=100000, cost=6000)
         int inputBufferSize = 86915;
@@ -63,10 +63,10 @@ class SimpleRealTest {
     }
 
     @TuneableParameters(initRandomSearch = 3, cacheNextPoints = 2, autoTimeMeasure = true)
-    class OptimizedList implements Serializable {
+    public class OptimizedList implements Serializable {
         static final long serialVersionUID = 4213L;
         @NominalParameter(values = {"ArrayList", "LinkedList"})
-        String list1Type = AutoTune.util.listTypes[0];
+        public String list1Type = AutoTune.util.listTypes[0];
     }
     @org.junit.jupiter.api.Test
     void simpleOptimizedListAddTest() throws IllegalAccessException {
@@ -88,7 +88,6 @@ class SimpleRealTest {
         System.out.println(Arrays.toString(tuner.getBestConfigurationParameter().toArray()));
         System.out.println(tuner.getBestConfiguration().list1Type);
 
-        //TODO logging functionality
         //TODO data export for evaluation in Browser
         //TODO add weighted cost adder
         //TODO logical weight description
@@ -96,7 +95,7 @@ class SimpleRealTest {
     }
 
     @TuneableParameters(initRandomSearch = 3, cacheNextPoints = 2, autoTimeMeasure = true)
-    class OptimizedMap implements Serializable {
+    public class OptimizedMap implements Serializable {
         static final long serialVersionUID = 4213L;
         @NominalParameter(values = {"HashMap", "TreeMap", "Hashtable"})
         String map1Type = AutoTune.util.mapTypes[0];

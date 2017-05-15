@@ -12,6 +12,8 @@ import java.util.*;
 public abstract class AutoTune<T extends Serializable>{
 
     protected @NotNull T config;
+    protected @NotNull
+    TuneableParameters tuneSettings;
 
     /**
      * The fields of the given object will be optimized such as it was defined by the containing annotations
@@ -20,6 +22,7 @@ public abstract class AutoTune<T extends Serializable>{
      */
     public AutoTune(@NotNull T config){
         this.config = config;
+        tuneSettings = config.getClass().getAnnotation(TuneableParameters.class);
     }
 
     /**
@@ -39,15 +42,6 @@ public abstract class AutoTune<T extends Serializable>{
      */
     public abstract @NotNull
     T getConfig();
-
-    /**
-     * Set the evaluated result from tuned config
-     *
-     * Only available after getConfig().
-     *
-     * @param amount lower is better
-     */
-    abstract void setResult(double amount);
 
     /**
      * Returns the best known configuration

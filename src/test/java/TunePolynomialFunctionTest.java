@@ -30,7 +30,7 @@ class TunePolynomialFunctionTest {
         for (int i = 0; i < 30; i++) {
             VariableXYZ cfg = tuner.getConfig();
             double value = cfg.x*cfg.y*cfg.z;
-            tuner.setResult(value);
+            //tuner.setResult(value);
             System.out.printf("Finished iteration %d with value %f \n", i, value);
         }
 
@@ -48,7 +48,7 @@ class TunePolynomialFunctionTest {
         for (int i = 0; i < 30; i++) {
             VariableXYZ cfg = tuner.getConfig();
             double value = Math.sqrt(cfg.z)*cfg.x + 999/(cfg.y+1);
-            tuner.setResult(value);
+            //tuner.setResult(value);
             System.out.printf("Finished iteration %d with value %f \n", i, value);
         }
 
@@ -112,7 +112,7 @@ class TunePolynomialFunctionTest {
             value += Math.sqrt(cfg.z4)*cfg.x4*cfg.x4 + 30/(cfg.y4+5);
             value += Math.sqrt(cfg.z5) + cfg.x5*cfg.x5 + cfg.y5;
             value += cfg.z6*cfg.x6*cfg.y6;
-            tuner.setResult(value);
+            //tuner.setResult(value);
             System.out.printf("Finished iteration %d with value %f \n", i, value);
         }
 
