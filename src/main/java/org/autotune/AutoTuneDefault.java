@@ -355,7 +355,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
     }
 
     @Override
-    void startTimeMeasure() {
+    public void startTimeMeasure() {
         if(this.startTimeStamp != Long.MIN_VALUE){
             throw new RuntimeException("Start time measure but time measure are already started!");
         }
@@ -363,7 +363,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
     }
 
     @Override
-    void stopTimeMeasure() {
+    public void stopTimeMeasure() {
         if(this.startTimeStamp == Long.MIN_VALUE){
             throw new RuntimeException("End time measure but time measure yet not started!");
         }
