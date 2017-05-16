@@ -1,7 +1,4 @@
-import org.autotune.AutoTuneDefault;
-import org.autotune.NominalParameter;
-import org.autotune.NumericParameter;
-import org.autotune.TuneableParameters;
+import org.autotune.*;
 
 import java.io.Serializable;
 
@@ -11,7 +8,7 @@ import java.io.Serializable;
 
 class AutoTuneDefaultTest{
     @TuneableParameters(initRandomSearch = 2, cacheNextPoints = 1)
-    class Task1Config implements Serializable {
+    public class Task1Config implements Serializable {
         static final long serialVersionUID = 421L;
         @NumericParameter
         int PARAM1  = 1;
@@ -24,14 +21,17 @@ class AutoTuneDefaultTest{
     }
 
     @org.junit.jupiter.api.Test
-    void littleTest() throws IllegalAccessException {
-        AutoTuneDefault<Task1Config> tuner = new AutoTuneDefault(new Task1Config());
-        Task1Config cfg = tuner.getConfig();
+    void littleTest() throws InterruptedException {
+        AutoTune<Task1Config> tuner = new AutoTuneDefault(new Task1Config());
+        Task1Config cfg = tuner.start().getConfig();
+        tuner.startTimeMeasure();
         double result = 0;
         result += cfg.PARAM1;
         result += cfg.PARAM2;
         result += cfg.PARAM3.equals("val2") ? 0 : 1;
         result += cfg.PARAM4 ? 0 : 1;
-        //tuner.setResult(result);
+        Thread.sleep(Double.doubleToLongBits(result));
+        tuner.stopTimeMeasure();
+        tuner.end();
     }
 }

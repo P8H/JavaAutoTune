@@ -12,8 +12,8 @@ import java.util.Arrays;
 
 class TunePolynomialFunctionTest {
 
-    @TuneableParameters(initRandomSearch = 5)
-    class VariableXYZ implements Serializable {
+    @TuneableParameters(initRandomSearch = 5, autoTimeMeasure = true)
+    public class VariableXYZ implements Serializable {
         static final long serialVersionUID = 421L;
         @NumericParameter(min=0, max=100)
         double x  = 1;
@@ -28,9 +28,9 @@ class TunePolynomialFunctionTest {
         AutoTune<VariableXYZ> tuner = new AutoTuneDefault(new VariableXYZ());
 
         for (int i = 0; i < 30; i++) {
-            VariableXYZ cfg = tuner.getConfig();
+            VariableXYZ cfg = tuner.start().getConfig();
             double value = cfg.x*cfg.y*cfg.z;
-            //tuner.setResult(value);
+            tuner.end();
             System.out.printf("Finished iteration %d with value %f \n", i, value);
         }
 
@@ -46,9 +46,9 @@ class TunePolynomialFunctionTest {
         AutoTune<VariableXYZ> tuner = new AutoTuneDefault(new VariableXYZ());
 
         for (int i = 0; i < 30; i++) {
-            VariableXYZ cfg = tuner.getConfig();
+            VariableXYZ cfg = tuner.start().getConfig();
             double value = Math.sqrt(cfg.z)*cfg.x + 999/(cfg.y+1);
-            //tuner.setResult(value);
+            tuner.end();
             System.out.printf("Finished iteration %d with value %f \n", i, value);
         }
 
@@ -59,8 +59,8 @@ class TunePolynomialFunctionTest {
         return tuner.getBestResult();
     }
 
-    @TuneableParameters(initRandomSearch = 15)
-    class ManyVariables implements Serializable {
+    @TuneableParameters(initRandomSearch = 15, autoTimeMeasure = true)
+    public class ManyVariables implements Serializable {
         static final long serialVersionUID = 421L;
         @NumericParameter(min=0, max=100)
         double x  = 1;
@@ -105,14 +105,14 @@ class TunePolynomialFunctionTest {
         AutoTune<ManyVariables> tuner = new AutoTuneDefault(new ManyVariables());
 
         for (int i = 0; i < 100; i++) {
-            ManyVariables cfg = tuner.getConfig();
+            ManyVariables cfg = tuner.start().getConfig();
             double value = Math.sqrt(cfg.z)*cfg.x + 999/(cfg.y+1);
             value += Math.sqrt(cfg.z2)*cfg.x2 + 999/(cfg.y2+1);
             value += Math.sqrt(cfg.z3)*cfg.x3*cfg.x3 + 30/(cfg.y3+5);
             value += Math.sqrt(cfg.z4)*cfg.x4*cfg.x4 + 30/(cfg.y4+5);
             value += Math.sqrt(cfg.z5) + cfg.x5*cfg.x5 + cfg.y5;
             value += cfg.z6*cfg.x6*cfg.y6;
-            //tuner.setResult(value);
+            tuner.end();
             System.out.printf("Finished iteration %d with value %f \n", i, value);
         }
 

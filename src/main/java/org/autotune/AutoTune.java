@@ -70,14 +70,14 @@ public abstract class AutoTune<T extends Serializable>{
      *
      * @return
      */
-    abstract void startTimeMeasure();
+    public abstract void startTimeMeasure();
 
     /**
      * End time measuring and add it to internal cost function
      *
      * @return
      */
-    abstract void stopTimeMeasure();
+    public abstract void stopTimeMeasure();
 
     static public class util{
         public final static String[] listTypes = {"ArrayList", "LinkedList"};
