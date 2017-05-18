@@ -40,7 +40,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
     @NumericParameter(min=1, max=30)
     int numOptimizerMultistarts =  20;
     @NumericParameter(min=0.0001, max=2.0)
-    double gaussianSignalVariance = 2.0;
+    double gaussianSignalVariance = 6.0;
 
     final private boolean useDefaultValues;
 
@@ -185,7 +185,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
                     cachedConfiguration.add(predefinedDefaultParameters);
                 }catch (IllegalAccessException exc){
                     logger.catching(exc);
-                    throw new RuntimeException("Can access the config object.", exc.getCause());
+                    throw new RuntimeException("Can't access the config object.", exc.getCause());
                 }
             }
 
@@ -316,7 +316,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
             int counter = 0;
             for (Pair<List<Double>, Double> conf : sampledConfigurations) {
-                stringBuilder.append(conf.getKey().stream().map(i -> i.toString()).collect(Collectors.joining(",")));
+                stringBuilder.append(conf.getKey().stream().map(i -> i.toString()).collect(Collectors.joining(";")));
                 stringBuilder.append(';');
 
                 stringBuilder.append(conf.getValue());
