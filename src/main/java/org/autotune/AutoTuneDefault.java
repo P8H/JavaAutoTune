@@ -316,10 +316,11 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
             int counter = 0;
             for (Pair<List<Double>, Double> conf : sampledConfigurations) {
-                stringBuilder.append(conf.getKey().stream().map(i -> i.toString()).collect(Collectors.joining(";")));
+
+                stringBuilder.append(conf.getKey().stream().map(i -> String.format(Locale.GERMAN, "%f", i)).collect(Collectors.joining(";")));
                 stringBuilder.append(';');
 
-                stringBuilder.append(conf.getValue());
+                stringBuilder.append(String.format(Locale.GERMAN, "%f", (conf.getValue())));
                 stringBuilder.append(';');
 
                 stringBuilder.append(counter++);
