@@ -82,7 +82,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
     }
 
     @Override
-    public AutoTune start() {
+    public AutoTune<T> start() {
 
         /** extract numeric field information **/
         //create domain info
@@ -133,6 +133,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
             final int numberOfSamples = (int) Math.pow(samplesPerDimension, dimension);
             cachedConfiguration = new ArrayList<>(numberOfSamples);
+            logger.debug("Number of latin hypercube samples: {}", numberOfSamples);
 
             //prepare cachedConfiguration
             for (int i = 0; i < numberOfSamples; i++) {
@@ -156,6 +157,8 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
                     cachedConfiguration.get(j).add(rand.nextDouble()*parameterWidth  + j * parameterWidth);
                 }
             }
+
+            cachedConfiguration.addAll(cachedConfiguration);
 
             initRandomSearchDone = true;
 
