@@ -363,7 +363,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         if(this.startTimeStamp != Long.MIN_VALUE){
             throw new RuntimeException("Start time measure but time measure are already started!");
         }
-        this.startTimeStamp = System.nanoTime();
+        this.startTimeStamp = System.currentTimeMillis();
     }
 
     @Override
@@ -371,7 +371,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         if(this.startTimeStamp == Long.MIN_VALUE){
             throw new RuntimeException("End time measure but time measure yet not started!");
         }
-        this.elapsedTime += System.nanoTime()-this.startTimeStamp;
+        this.elapsedTime += System.currentTimeMillis()-this.startTimeStamp;
         this.startTimeStamp = Long.MIN_VALUE;
         logger.debug("Stop time measure. Elapsed time: {} ns", this.elapsedTime);
     }
