@@ -79,6 +79,13 @@ public abstract class AutoTune<T extends Serializable>{
      */
     public abstract void stopTimeMeasure();
 
+    /**
+     * Add manual the cost for the actual configuration
+     *
+     * @return
+     */
+    public abstract void addCost(double cost);
+
     static public class util{
         public final static String[] listTypes = {"ArrayList", "LinkedList"};
 

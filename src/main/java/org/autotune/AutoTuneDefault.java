@@ -34,6 +34,9 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
     final private int cacheSize;
 
+    final private int retryAfter = 2; //retry configurations after x samples
+    private int retryPhase = 0;
+
     //MOE hyper-parameter
     @NumericParameter(min=0.2, max=30)
     int lengthScaleDivider = 2;
@@ -225,7 +228,24 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
             cachedConfiguration = new LinkedList<List<Double>>() {{
                 add(bestConfiguration);
             }};
-        } else {
+        }
+        else {
+
+            /** retry sampled configurations **/
+            if((sampledConfigurations.size() + 1) % retryAfter == 0 && (sampledConfigurations.size() + 1) / retryAfter > retryPhase){
+                //add all x-1 last sampled configurations to cachedConfigurations
+                cachedConfiguration.addAll(
+                        sampledConfigurations.subList(retryPhase*retryAfter, retryPhase*retryAfter+retryAfter-1)
+                                .stream().map(listDoublePair -> listDoublePair.getKey()).collect(Collectors.toList())
+                );
+                //add last cached configuration to the top of the list
+                cachedConfiguration.add(cachedConfiguration.get(cachedConfiguration.size()-retryAfter));
+
+                retryPhase++;
+                retryPhase++;
+            }
+
+
             currentConfiguration = cachedConfiguration.get(cachedConfiguration.size() - 1);
             cachedConfiguration.remove(cachedConfiguration.size() - 1);
         }
@@ -374,6 +394,11 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         this.elapsedTime += System.currentTimeMillis()-this.startTimeStamp;
         this.startTimeStamp = Long.MIN_VALUE;
         logger.debug("Stop time measure. Elapsed time: {} ns", this.elapsedTime);
+    }
+
+    @Override
+    public void addCost(double cost) {
+        this.currentConfigurationCosts += cost;
     }
 
 }

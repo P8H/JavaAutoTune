@@ -16,36 +16,36 @@ import static org.apache.spark.sql.functions.*;
  */
 
 class SparkTest {
-    //TODO latin hypercube sample reparieren
+    private SparkSession.Builder coreSparkBuilder(){
+        return SparkSession
+                .builder()
+                .appName("Java Spark SQL data sources example")
+                .master("local[*]");
+    }//.master("spark://141.100.62.105:7077"))
+
+    private void reduceLogLevel(SparkSession spark){
+        JavaSparkContext sparkContextD = JavaSparkContext.fromSparkContext(spark.sparkContext());
+        sparkContextD.setLogLevel("ERROR");
+    }
 
     @org.junit.jupiter.api.Test
     void littleTest() throws InterruptedException {
         AutoTune<SparkTuneableConf> tuner = new AutoTuneDefault(new SparkTuneableConf());
+        {
+            //warm up
+            SparkTuneableConf cfgDefault = new SparkTuneableConf(); //with default values
 
-        //warm up
-        SparkTuneableConf cfgDefault = new SparkTuneableConf(); //with default values
+            SparkSession sparkD = cfgDefault.setConfig(coreSparkBuilder()).getOrCreate();
+            reduceLogLevel(sparkD);
 
-        SparkSession sparkD = cfgDefault.setConfig(SparkSession
-                .builder()
-                .appName("Java Spark SQL data sources example")
-                .master("local[*]"))//.master("spark://141.100.62.105:7077"))
-                .getOrCreate();
-
-        JavaSparkContext sparkContextD = JavaSparkContext.fromSparkContext(sparkD.sparkContext());
-        sparkContextD.setLogLevel("ERROR");
-        simpleSparkMethod(sparkD);
-        sparkD.stop();
+            simpleSparkMethod(sparkD);
+            sparkD.stop();
+        }
 
         for (int t = 0; t < 40; t++) { //40 benchmark tests
             SparkTuneableConf cfg = tuner.start().getConfig();
-            SparkSession spark = cfg.setConfig(SparkSession
-                    .builder()
-                    .appName("Java Spark SQL data sources example")
-                    .master("local[*]"))
-                    .getOrCreate();
-
-            JavaSparkContext sparkContext = JavaSparkContext.fromSparkContext(spark.sparkContext());
-            sparkContext.setLogLevel("ERROR");
+            SparkSession spark = cfg.setConfig(coreSparkBuilder()).getOrCreate();
+            reduceLogLevel(spark);
 
             tuner.startTimeMeasure();
 
@@ -58,35 +58,27 @@ class SparkTest {
             tuner.end();
         }
 
-        //Get best configuration an wait
-        SparkTuneableConf cfg = tuner.getBestConfiguration();
-        SparkSession spark = cfg.setConfig(SparkSession
-                .builder()
-                .appName("Java Spark SQL data sources example")
-                .master("local[*]"))
-                .getOrCreate();
+        {
+            //Get best configuration an wait
+            SparkTuneableConf cfg = tuner.getBestConfiguration();
+            SparkSession spark = cfg.setConfig(coreSparkBuilder()).getOrCreate();
 
-        JavaSparkContext sparkContext = JavaSparkContext.fromSparkContext(spark.sparkContext());
-        sparkContext.setLogLevel("ERROR");
+            reduceLogLevel(spark);
 
+            simpleSparkMethod(spark);
 
-        simpleSparkMethod(spark);
-        System.out.println("\007");
-        System.out.println("Best configuration with result:" + tuner.getBestResult());
-        Thread.sleep(1000 * 60 * 10);
+            System.out.println("Best configuration with result:" + tuner.getBestResult());
+            Thread.sleep(1000 * 60 * 10); // wait a little bit
+        }
     }
 
     void simpleSparkMethod(SparkSession spark) {
-        Dataset<Row> usersDF = spark.read().format("csv").option("header", true).option("inferSchema", false).load("datasets/rita_flight/rita_flight_2008 Kopie 1.csv");
+        Dataset<Row> dataset1 = spark.read().format("csv").option("header", true).option("inferSchema", false).load("datasets/rita_flight/rita_flight_2008.csv");
+        //Dataset<Row> dataset2 = spark.read().format("csv").option("header", true).option("inferSchema", false).load("datasets/rita_flight/rita_flight_2007.csv");
+        //Dataset<Row> dataset3 = spark.read().format("csv").option("header", true).option("inferSchema", false).load("datasets/rita_flight/rita_flight_2006.csv");
+        //dataset1 = dataset1.union(dataset2).union(dataset3);
 
-        Dataset<Row> usersDF2 = spark.read().format("csv").option("header", true).option("inferSchema", false).load("datasets/rita_flight/rita_flight_2008 Kopie 2.csv");
-        usersDF = usersDF.union(usersDF2);
-
-        System.out.println("Lines number: " + usersDF.count());
-        //usersDF.printSchema();
-        //usersDF.show();
-
-        Dataset<Row> arrivalDelay = usersDF.select("Dest", "ArrDelay")
+        Dataset<Row> arrivalDelay = dataset1.select("Dest", "ArrDelay")
                 .map(value -> {
                     int arrDelay;
                     try {
