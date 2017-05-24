@@ -34,7 +34,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
     final private int cacheSize;
 
-    final private int retryAfter = 2; //retry configurations after x samples
+    final private int retryAfter; //retry configurations after x samples
     private int retryPhase = 0;
 
     //MOE hyper-parameter
@@ -77,11 +77,13 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         //extract class information
         this.cacheSize = tuneSettings.cacheNextPoints();
         this.autoTimeMeasure = tuneSettings.autoTimeMeasure();
-        this.useDefaultValues = true;
+        this.retryAfter = tuneSettings.reftryAfter();
+        this.useDefaultValues = tuneSettings.sampleDefaultValues();
 
         this.numericFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NumericParameter.class);
 
         this.nominalFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NominalParameter.class);
+
     }
 
     @Override

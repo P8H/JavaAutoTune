@@ -15,4 +15,8 @@ public @interface TuneableParameters {
     int cacheNextPoints() default 5;
 
     boolean autoTimeMeasure() default false;
+
+    int reftryAfter() default 0;
+
+    boolean sampleDefaultValues() default true;
 }

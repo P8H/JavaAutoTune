@@ -10,7 +10,7 @@ import java.io.Serializable;
 /**
  * Created by KevinRoj on 21.05.17.
  */
-@TuneableParameters(initRandomSearch = 1, cacheNextPoints = 1)
+@TuneableParameters(initRandomSearch = 4, cacheNextPoints = 1, reftryAfter = 4)
 public class SparkTuneableConf implements Serializable {
     static final long serialVersionUID = 421L;
     @NumericParameter(min = 13421772, max = 671088640)
