@@ -1,4 +1,5 @@
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
@@ -27,7 +28,7 @@ class SparkTest {
         SparkSession sparkD = cfgDefault.setConfig(SparkSession
                 .builder()
                 .appName("Java Spark SQL data sources example")
-                .master("local[*]"))
+                .master("local[*]"))//.master("spark://141.100.62.105:7077"))
                 .getOrCreate();
 
         JavaSparkContext sparkContextD = JavaSparkContext.fromSparkContext(sparkD.sparkContext());
@@ -84,7 +85,6 @@ class SparkTest {
         System.out.println("Lines number: " + usersDF.count());
         //usersDF.printSchema();
         //usersDF.show();
-
 
         Dataset<Row> arrivalDelay = usersDF.select("Dest", "ArrDelay")
                 .map(value -> {
