@@ -126,42 +126,33 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
         //random search at the begin
         if(!initRandomSearchDone){
-            final int samplesPerDimension;
-            if(dimension != 1){
-                samplesPerDimension = (int) Math.ceil(Math.log10(tuneSettings.initRandomSearch()) / Math.log10(dimension));
-            }else{
-                samplesPerDimension = tuneSettings.initRandomSearch();
-            }
-
-
-            final int numberOfSamples = (int) Math.pow(samplesPerDimension, dimension);
+            final int numberOfSamples = tuneSettings.initRandomSearch();
             cachedConfiguration = new ArrayList<>(numberOfSamples);
-            logger.debug("Number of latin hypercube samples: {}", numberOfSamples);
+            logger.debug("Number of random samples: {}", numberOfSamples);
 
             //prepare cachedConfiguration
             for (int i = 0; i < numberOfSamples; i++) {
                 cachedConfiguration.add(new ArrayList<>(numericFields.size()));
             }
 
-            //fill cachedConfiguration with latin hypercube samples by dimension
+            Random rand = new Random();
+            //fill cachedConfiguration with random samples by dimension
             for (int i = 0; i < numericFields.size(); i++) { //for numericFields
                 NumericParameter numericParameterInfo = numericFields.get(i).getAnnotation(NumericParameter.class);
-                final double parameterWidth = (numericParameterInfo.max() - numericParameterInfo.min()) / samplesPerDimension;
-                Random rand = new Random();
+                final double parameterWidth = (numericParameterInfo.max() - numericParameterInfo.min());
+
                 for(int j = 0; j < numberOfSamples; j++){
-                    cachedConfiguration.get(j).add(rand.nextDouble()*parameterWidth + numericParameterInfo.min() + j * parameterWidth);
+                    cachedConfiguration.get(j).add(rand.nextDouble()*parameterWidth + numericParameterInfo.min());
                 }
             }
             for (int i = 0; i < nominalFields.size(); i++) { //for nominalFields
                 NominalParameter nominalParameterInfo = nominalFields.get(i).getAnnotation(NominalParameter.class);
-                final double parameterWidth = (double)nominalParameterInfo.values().length/samplesPerDimension;
-                Random rand = new Random();
+                final double parameterWidth = (double)nominalParameterInfo.values().length;
+
                 for(int j = 0; j < numberOfSamples; j++){
-                    cachedConfiguration.get(j).add(rand.nextDouble()*parameterWidth  + j * parameterWidth);
+                    cachedConfiguration.get(j).add(rand.nextDouble()*parameterWidth);
                 }
             }
-
-            cachedConfiguration.addAll(cachedConfiguration);
 
             initRandomSearchDone = true;
 
