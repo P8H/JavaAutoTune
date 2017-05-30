@@ -13,7 +13,8 @@ import java.io.Serializable;
 @TuneableParameters(initRandomSearch = 4, cacheNextPoints = 1, reftryAfter = 4)
 public class SparkTuneableConf implements Serializable {
     static final long serialVersionUID = 421L;
-    @NumericParameter(min = 13421772, max = 671088640)
+    //from 1.2 MiB to 512 MiB, default 128 MiB
+    @NumericParameter(min = 1258000, max = 671088640)
     public int maxPartitionBytes = 134217728;
     @NominalParameter(values = {"false", "true"})
     public boolean inMemoryColumnarStorageCompressed = true;
@@ -27,10 +28,10 @@ public class SparkTuneableConf implements Serializable {
     public boolean broadcastCompress = true;
     @NominalParameter(values = {"false", "true"})
     public boolean rddCompress = false;
-    @NumericParameter(min = 1, max = 8)
-    public int defaultParallelism = 2;
-    @NumericParameter(min = 1, max = 8)
-    public long executorCores = 2;
+    @NumericParameter(min = 1, max = 4)
+    public int defaultParallelism = 4; //default number of cores
+    @NumericParameter(min = 1, max = 4)
+    public long executorCores = 4;
     @NumericParameter(min = 1, max = 4)
     public long taskCpus = 1;
 
@@ -43,8 +44,8 @@ public class SparkTuneableConf implements Serializable {
                 .config("spark.shuffle.spill.compress", this.shuffleSpillCompress)
                 .config("spark.broadcast.compress", this.broadcastCompress)
                 .config("spark.rdd.compress", this.rddCompress)
-                .config("spark.default.parallelism", this.defaultParallelism)
-                .config("spark.executor.cores", this.executorCores)
-                .config("spark.task.cpus", this.taskCpus);
+                .config("spark.default.parallelism", this.defaultParallelism);
+                //.config("spark.executor.cores", this.executorCores)
+                //.config("spark.task.cpus", this.taskCpus);
     }
 }
