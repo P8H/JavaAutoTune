@@ -19,9 +19,9 @@ class SparkTest {
     private SparkSession.Builder coreSparkBuilder(){
         return SparkSession
                 .builder()
-                .appName("Java Spark SQL data sources example")
-                .master("local[*]");
+                .appName("Java Spark SQL data sources example");
     }//.master("spark://141.100.62.105:7077"))
+
 
     private void reduceLogLevel(SparkSession spark){
         JavaSparkContext sparkContextD = JavaSparkContext.fromSparkContext(spark.sparkContext());
