@@ -70,6 +70,9 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
     @NotNull
     final protected List<Field> nominalFields;
 
+    @NotNull
+    final protected String moeOptimizerUrl;
+
     public AutoTuneDefault(T config){
         super(config);
         logger.debug("Tuner created for configuration class " + config.getClass().getName());
@@ -83,6 +86,13 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         this.numericFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NumericParameter.class);
 
         this.nominalFields = FieldUtils.getFieldsListWithAnnotation(config.getClass(), NominalParameter.class);
+
+        Map<String, String> env = System.getenv();
+        if (env.containsKey("MOE_URL")) {
+            moeOptimizerUrl = env.get("MOE_URL");
+        } else {
+            moeOptimizerUrl = "http://127.0.0.1:6543";
+        }
 
     }
 
@@ -191,7 +201,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         }else if(cachedConfiguration.size() == 0){
             //fill cache from REST optimizer
             Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("http://127.0.0.1:6543")
+                    .baseUrl(this.moeOptimizerUrl)
                     .client(okHttpClient)
                     .addConverterFactory(JacksonConverterFactory.create())
                     .build();
@@ -226,16 +236,16 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
             /** retry sampled configurations **/
             if (retryAfter != 0 && (sampledConfigurations.size() + 1) % retryAfter == 0 && (sampledConfigurations.size() + 1) / retryAfter > retryPhase) {
-                //add all x-1 last sampled configurations to cachedConfigurations
-                cachedConfiguration.addAll(
-                        sampledConfigurations.subList(retryPhase*retryAfter, retryPhase*retryAfter+retryAfter-1)
-                                .stream().map(listDoublePair -> listDoublePair.getKey()).collect(Collectors.toList())
-                );
-                //add last cached configuration to the top of the list
-                cachedConfiguration.add(cachedConfiguration.get(cachedConfiguration.size()-retryAfter));
+                //copy last cached configuration again to the top of the list
+                cachedConfiguration.add(cachedConfiguration.get(cachedConfiguration.size() - 1));
 
-                retryPhase++;
-                retryPhase++;
+                //add all x-1 last sampled configurations to cachedConfigurations but in reversed order
+                List<List<Double>> sublist = sampledConfigurations.subList(retryPhase * retryAfter, retryPhase * retryAfter + retryAfter - 1)
+                        .stream().map(listDoublePair -> listDoublePair.getKey()).collect(Collectors.toList());
+                Collections.reverse(sublist);
+                cachedConfiguration.addAll(sublist);
+
+                retryPhase += 2;
             }
 
 
