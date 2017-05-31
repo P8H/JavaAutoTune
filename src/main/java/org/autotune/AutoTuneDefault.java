@@ -114,7 +114,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         for (Field field : nominalFields){
             NominalParameter nominalParameterInfo = field.getAnnotation(NominalParameter.class);
 
-            GpNextPointsRequest.Domain boundA = new GpNextPointsRequest.Domain(nominalParameterInfo.values().length, 0);
+            GpNextPointsRequest.Domain boundA = new GpNextPointsRequest.Domain(nominalParameterInfo.values().length - 1, 0);
             req.getDomain_info().getDomain_bounds().add(boundA);
 
             //length scale for nominal value is one
@@ -149,7 +149,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
             }
             for (int i = 0; i < nominalFields.size(); i++) { //for nominalFields
                 NominalParameter nominalParameterInfo = nominalFields.get(i).getAnnotation(NominalParameter.class);
-                final double parameterWidth = (double)nominalParameterInfo.values().length;
+                final double parameterWidth = (double) nominalParameterInfo.values().length - 1;
 
                 for(int j = 0; j < numberOfSamples; j++){
                     cachedConfiguration.get(j).add(rand.nextDouble()*parameterWidth);
@@ -225,7 +225,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         else {
 
             /** retry sampled configurations **/
-            if((sampledConfigurations.size() + 1) % retryAfter == 0 && (sampledConfigurations.size() + 1) / retryAfter > retryPhase){
+            if (retryAfter != 0 && (sampledConfigurations.size() + 1) % retryAfter == 0 && (sampledConfigurations.size() + 1) / retryAfter > retryPhase) {
                 //add all x-1 last sampled configurations to cachedConfigurations
                 cachedConfiguration.addAll(
                         sampledConfigurations.subList(retryPhase*retryAfter, retryPhase*retryAfter+retryAfter-1)
@@ -386,7 +386,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
         }
         this.elapsedTime += System.currentTimeMillis()-this.startTimeStamp;
         this.startTimeStamp = Long.MIN_VALUE;
-        logger.debug("Stop time measure. Elapsed time: {} ns", this.elapsedTime);
+        logger.debug("Stop time measure. Elapsed time: {} ms", this.elapsedTime);
     }
 
     @Override
