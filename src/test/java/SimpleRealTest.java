@@ -88,9 +88,6 @@ class SimpleRealTest {
         System.out.println(Arrays.toString(tuner.getBestConfigurationParameter().toArray()));
         System.out.println(tuner.getBestConfiguration().list1Type);
 
-        //TODO add weighted cost adder
-        //TODO logical weight description
-
     }
 
     @TuneableParameters(initRandomSearch = 3, cacheNextPoints = 2, autoTimeMeasure = true)

@@ -3,6 +3,7 @@ package org.autotune;
 import javafx.util.Pair;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -325,37 +326,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
         this.currentConfigurationObject = null;
         this.elapsedTime = 0;
-        logger.trace("Sampled configurations as CSV \n{}", () -> {
-            StringBuilder stringBuilder = new StringBuilder();
-            for (Field nField : this.numericFields) {
-                stringBuilder.append(nField.getName());
-                stringBuilder.append(';');
-            }
-            for (Field nField : this.nominalFields) {
-                stringBuilder.append(nField.getName());
-                stringBuilder.append(';');
-            }
-            stringBuilder.append("cost");
-            stringBuilder.append(';');
-            stringBuilder.append("order");
-            stringBuilder.append('\n');
-
-            int counter = 0;
-            for (Pair<List<Double>, Double> conf : sampledConfigurations) {
-
-                stringBuilder.append(conf.getKey().stream().map(i -> String.format(Locale.GERMAN, "%f", i)).collect(Collectors.joining(";")));
-                stringBuilder.append(';');
-
-                stringBuilder.append(String.format(Locale.GERMAN, "%f", (conf.getValue())));
-                stringBuilder.append(';');
-
-                stringBuilder.append(counter++);
-                stringBuilder.append('\n');
-            }
-            stringBuilder.deleteCharAt(stringBuilder.length() - 1); //remove last new line
-
-            return stringBuilder.toString();
-        });
+        logger.trace("Sampled configurations as CSV \n{}", this.getSampledConfigurationAsCSV());
     }
 
     @Override
@@ -378,6 +349,9 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
 
     @Override
     public double getBestResult() {
+        if (logger.getLevel().equals(Level.DEBUG)) {
+            logger.debug("Sampled configurations as CSV \n{}", this.getSampledConfigurationAsCSV());
+        }
         return this.bestResult;
     }
 
@@ -402,6 +376,38 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
     @Override
     public void addCost(double cost) {
         this.currentConfigurationCosts += cost;
+    }
+
+    public String getSampledConfigurationAsCSV() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Field nField : this.numericFields) {
+            stringBuilder.append(nField.getName());
+            stringBuilder.append(';');
+        }
+        for (Field nField : this.nominalFields) {
+            stringBuilder.append(nField.getName());
+            stringBuilder.append(';');
+        }
+        stringBuilder.append("cost");
+        stringBuilder.append(';');
+        stringBuilder.append("order");
+        stringBuilder.append('\n');
+
+        int counter = 0;
+        for (Pair<List<Double>, Double> conf : sampledConfigurations) {
+
+            stringBuilder.append(conf.getKey().stream().map(i -> String.format(Locale.GERMAN, "%f", i)).collect(Collectors.joining(";")));
+            stringBuilder.append(';');
+
+            stringBuilder.append(String.format(Locale.GERMAN, "%f", (conf.getValue())));
+            stringBuilder.append(';');
+
+            stringBuilder.append(counter++);
+            stringBuilder.append('\n');
+        }
+        stringBuilder.deleteCharAt(stringBuilder.length() - 1); //remove last new line
+
+        return stringBuilder.toString();
     }
 
 }
