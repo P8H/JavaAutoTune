@@ -132,8 +132,6 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
             req.getCovariance_info().getHyperparameters().add(1.0);
         }
 
-        final int dimension = numericFields.size() + nominalFields.size();
-
         req.getDomain_info().updateDimension();
 
 
@@ -276,7 +274,7 @@ public class AutoTuneDefault<T extends Serializable> extends AutoTune<T> {
             }
             for (Field field : nominalFields) { //for nominal fields
                 NominalParameter nominalParameterInfo = field.getAnnotation(NominalParameter.class);
-                int label = currentConfigurationItr.next().intValue();
+                int label = (int) Math.round(currentConfigurationItr.next());
                 label = label < 0 ? 0 : label;
                 label = label >= nominalParameterInfo.values().length ? nominalParameterInfo.values().length - 1 : label;
 
