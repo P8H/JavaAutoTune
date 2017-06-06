@@ -13,30 +13,32 @@ import java.util.concurrent.*;
  */
 
 class SimpleRealTest {
-
-    @TuneableParameters(initRandomSearch = 5, autoTimeMeasure = true)
-    public class OptimalParameter implements Serializable {
-        static final long serialVersionUID = 42122L;
-        @NumericParameter(min=1, max=100000)
-        int inputBufferSize = 6000;
-    }
-
-    @TuneableParameters(initRandomSearch = 3, cacheNextPoints = 2, autoTimeMeasure = true)
+    @TuneableParameters(initRandomSearch = 3, cacheNextPoints = 1, autoTimeMeasure = true)
     public class OneParameter implements Serializable {
         static final long serialVersionUID = 4213L;
-        @NumericParameter(min=1, max=100000, cost=6000)
-        int inputBufferSize = 86915;
+        @NumericParameter(min = 1, max = 100000, cost = 0.5)
+        public int inputBufferSize = 86915;
     }
 
     @org.junit.jupiter.api.Test
     void stupidBufferTest() throws IOException, IllegalAccessException, InterruptedException {
         AutoTune<OneParameter> tuner = new AutoTuneDefault(new OneParameter());
-        for (int i = 1; i < 13; i++) {
-            long duration = 0;
-            OneParameter cfg = tuner.start().getConfig();
-            for(int j = 0; j < 3; j++) {
-                BufferedReader reader = new BufferedReader(new FileReader("datasets/rita_flight/rita_flight_2008 Kopie " + i +".csv"), cfg.inputBufferSize);
+
+        //warm up
+        {
+            for (int j = 0; j < 5; j++) {
+                BufferedReader reader = new BufferedReader(new FileReader("datasets/rita_flight/rita_flight_2008.csv"));
                 long ff = reader.lines().count();
+                reader.close();
+            }
+        }
+
+        for (int i = 1; i < 13; i++) {
+            OneParameter cfg = tuner.start().getConfig();
+
+            BufferedReader reader = new BufferedReader(new FileReader("datasets/rita_flight/rita_flight_2008.csv"), cfg.inputBufferSize);
+                long ff = reader.lines().count();
+            tuner.end();
                 reader.close();
 
                 //clear disk cache on unix
@@ -46,23 +48,19 @@ class SimpleRealTest {
                 Process p = r.exec("sync && sudo purge");
                 p.waitFor();
 
-            }
-            //tuner.setResult(duration/3);
-            tuner.end();
-            System.out.printf("Average time: %d \n", duration/3);
             System.out.println(cfg.inputBufferSize);
         }
         System.out.printf("Best configuration found with result %f \n", tuner.getBestResult());
         System.out.println(Arrays.toString(tuner.getBestConfigurationParameter().toArray()));
 
-        long start = System.nanoTime();
+        long start = System.currentTimeMillis();
         BufferedReader reader  = new BufferedReader(new FileReader("datasets/rita_flight/rita_flight_2008.csv"));
         long ff = reader.lines().count();
-        System.out.printf("Result with default value %d \n", System.nanoTime()-start);
-        System.out.printf("Improvement %f %% \n", ((System.nanoTime()-start)/tuner.getBestResult()*100));
+        System.out.printf("Result with default value %d \n", System.currentTimeMillis() - start);
+        System.out.printf("Improvement %f %% \n", ((System.currentTimeMillis() - start) / (tuner.getBestResult()) * 100 - 100));
     }
 
-    @TuneableParameters(initRandomSearch = 3, cacheNextPoints = 2, autoTimeMeasure = true)
+    @TuneableParameters(initRandomSearch = 2, reftryAfter = 2, cacheNextPoints = 2, autoTimeMeasure = true)
     public class OptimizedList implements Serializable {
         static final long serialVersionUID = 4213L;
         @NominalParameter(values = {"ArrayList", "LinkedList"})
@@ -77,8 +75,11 @@ class SimpleRealTest {
             List<Double> list1 = AutoTune.util.getOptimizedList(cfg.list1Type);
 
             //Random rndGen = new Random();
-            for (int i = 0; i < 5000000; i++) {
+            for (int i = 0; i < 50000; i++) {
                 list1.add(1.0);
+            }
+            for (int i = 0; i < 50000 / 3; i++) {
+                list1.remove(i * 2);
             }
             tuner.end();
             System.out.println(cfg.list1Type);
@@ -90,11 +91,11 @@ class SimpleRealTest {
 
     }
 
-    @TuneableParameters(initRandomSearch = 3, cacheNextPoints = 2, autoTimeMeasure = true)
+    @TuneableParameters(initRandomSearch = 3, reftryAfter = 2, cacheNextPoints = 2, autoTimeMeasure = true)
     public class OptimizedMap implements Serializable {
         static final long serialVersionUID = 4213L;
         @NominalParameter(values = {"HashMap", "TreeMap", "Hashtable"})
-        String map1Type = AutoTune.util.mapTypes[0];
+        public String map1Type = AutoTune.util.mapTypes[0];
     }
 
     @org.junit.jupiter.api.Test
@@ -102,13 +103,16 @@ class SimpleRealTest {
 
         AutoTune<OptimizedMap> tuner = new AutoTuneDefault(new OptimizedMap());
 
-        for (int t = 0; t < 10; t++) { //10 benchmark tests
+        for (int t = 0; t < 20; t++) { //10 benchmark tests
             OptimizedMap cfg = tuner.start().getConfig();
             Map<String, Double> map1 = AutoTune.util.getOptimizedMap(cfg.map1Type);
 
             Random rndGen = new Random();
-            for (int i = 0; i < 5000000; i++) {
+            for (int i = 0; i < 500000; i++) {
                 map1.put(Long.toString(rndGen.nextInt()), rndGen.nextDouble());
+            }
+            for (int i = 0; i < 50000; i++) {
+                map1.remove(Long.toString(rndGen.nextInt()));
             }
             tuner.end();
             System.out.println(cfg.map1Type);
