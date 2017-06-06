@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 /**
  * Created by KevinRoj on 26.04.17.
+ * Functional test of AutoTune implementation
  */
 
 class AutoTuneDefaultTest{
@@ -11,13 +12,13 @@ class AutoTuneDefaultTest{
     public class Task1Config implements Serializable {
         static final long serialVersionUID = 421L;
         @NumericParameter
-        int PARAM1  = 1;
+        public int PARAM1 = 1;
         @NumericParameter(min=0.1, max=2.5)
-        double PARAM2 = 0.1;
+        public double PARAM2 = 0.1;
         @NominalParameter(values = {"val1", "val2"})
-        String PARAM3 = "val1";
+        public String PARAM3 = "val1";
         @NominalParameter(values = {"true", "false"})
-        boolean PARAM4 = false;
+        public boolean PARAM4 = false;
     }
 
     @org.junit.jupiter.api.Test
@@ -30,7 +31,7 @@ class AutoTuneDefaultTest{
         result += cfg.PARAM2;
         result += cfg.PARAM3.equals("val2") ? 0 : 1;
         result += cfg.PARAM4 ? 0 : 1;
-        Thread.sleep(Double.doubleToLongBits(result));
+        Thread.sleep((long) result);
         tuner.stopTimeMeasure();
         tuner.end();
     }
