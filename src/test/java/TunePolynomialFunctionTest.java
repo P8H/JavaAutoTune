@@ -24,7 +24,7 @@ class TunePolynomialFunctionTest {
     }
 
     @org.junit.jupiter.api.Test
-    double T() throws IllegalAccessException {
+    double simpleProductTest() throws IllegalAccessException {
         AutoTune<VariableXYZ> tuner = new AutoTuneDefault(new VariableXYZ());
 
         for (int i = 0; i < 30; i++) {
