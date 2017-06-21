@@ -61,7 +61,7 @@ class TunePolynomialFunctionTest {
         return tuner.getBestResult();
     }
 
-    @TuneableParameters(initRandomSearch = 15, autoTimeMeasure = true)
+    @TuneableParameters(initRandomSearch = 15)
     public class ManyVariables implements Serializable {
         static final long serialVersionUID = 421L;
         @NumericParameter(min=0, max=100)
